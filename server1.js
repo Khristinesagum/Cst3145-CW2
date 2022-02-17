@@ -1,9 +1,13 @@
 // Import dependencies modules:
-const express = require('express')
+const express = require('express');
+const bodyParser = require('body-parser');
+const path = require('path');
+const req = require('express/lib/request');
+const res = require('express/lib/response');
 // Create an Express.js instance:
 const app = express()
 
-
+app.use(bodyParser.urlencoded({ extended: false }));
 
 // config Express.js
 app.use(express.json())
@@ -58,6 +62,20 @@ app.put('/collection/:collectionName/:id', (req, res, next) => {
     res.send((result.modifiedCount === 1) ? {msg: 'success'} : {msg: 'error'})
     })
 })
+
+app.get('/collection/Lesson Information', (req, res, next) => {
+    req.collection.find({}).toArray((e, lessonsinfo) => {
+        if (e) return next(e)
+        res.send(lessonsinfo)
+    })
+})
+app.post('/post-order', function (req, res) {
+    db.then(function(dbs) {
+        delete req.body._id; // for safety reasons
+        dbs.collection('Order Information').insertOne(req.body);
+    });    
+    res.send('Data received:\n' + JSON.stringify(req.body));
+});
 
 const port = process.env.PORT || 3000
 app.listen(port)

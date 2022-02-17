@@ -1,0 +1,291 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolClub Activities</title>
+    <script src = "https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <link rel="stylesheet" href="mystyle.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+</head>
+<body>
+
+   
+    <!-- Div accessed from Vue -->
+    <div id="app">
+        <header>
+            <h1 class="sitename" v-text="sitename"></h1>
+            <button class="shoppingCart" v-on:click='showShoppingCart' v-if="cartItemCount > 0">
+                {{cartItemCount}}
+                <span class="fas fa-cart-plus"> </span>Shopping cart
+            </button>
+            <button class="shoppingCartDisabled" disabled="disabled" v-else>
+                <span class="fas fa-cart-plus"> </span>Shopping cart
+            </button>
+            <p class="search">
+                <input class="searchText" id="input" v-model="search" placeholder="search..." type="text"/>
+            </p>
+        </header><br>
+        <div class="secondDiv">
+
+            <h3>Sort by:</h3>
+            <button class="sort" v-on:click="SortLesson('subject')">
+                <span class="fas fa-book"></span> subject
+            </button>
+            <button class="sort" v-on:click="SortLesson('Location')">
+                <span class="fas fa-map-marker-alt"></span> location
+            </button>
+            <button class="sort" v-on:click="SortLesson('Price')">
+                <span class="fas fa-pound-sign"></span> price
+            </button>
+    
+            <button class="sort" v-on:click="SortLesson('subject')"  v-show="sortBy == 'subject'" >
+                <span class="fas fa-sort-alpha-up-alt"></span> ascending
+            </button>
+            <button class="sort" v-on:click="sortbySubjDESC" v-show="sortBy == 'subject'" >
+                <span class="fas fa-sort-alpha-down-alt"></span> descending
+            </button>
+    
+            <button class="sort" v-on:click="SortLesson('Location')"  v-show="sortBy == 'Location'" >
+                <span class="fas fa-sort-alpha-up-alt"></span> ascending
+            </button>
+            <button class="sort" v-on:click="sortbyLocDESC" v-show="sortBy == 'Location'" >
+                <span class="fas fa-sort-alpha-down-alt"></span> descending
+            </button>
+    
+            <button class="sort" v-on:click="SortLesson('Price')"  v-show="sortBy == 'Price'" >
+                <span class="fas fa-sort-alpha-up-alt"></span> ascending
+            </button>
+            <button class="sort" v-on:click="sortbyPriceDESC" v-show="sortBy == 'Price'" >
+                <span class="fas fa-sort-alpha-down-alt"></span> descending
+            </button>
+            
+        </div>
+        <main >
+            <div class="all" v-if='showLessons'>
+    
+            <div class="clearfix" v-for="lesson in lessonsinfo">
+                <div class="border">
+               <figure>
+                <img v-bind:src="lesson.image">
+               </figure>
+                <p v-text="lesson.subject"></p>
+                <p v-text="lesson.Location"></p>
+                <p>Price:{{lesson.Price}}</p>
+                <p>Spaces:{{lesson.Spaces}}</p>
+                <button class="button" v-on:click='addToCart(lesson)' v-if='canAddToCart(lesson)'>Add to Cart</button>
+                <button class="buttonDisabled" disabled='disabled' v-else>Add to Cart</button>
+                </div>
+            </div>
+            </div>
+            
+            <div v-else>
+                <h3 style="margin-left: 3%;">Shopping cart</h3>
+                <button class="previousButton" v-on:click='previousPage'>Go to lessons</button>
+                <div class="all">
+                <div class="clearfix" v-for="lesson in cart">
+                    <div class="border">    
+                   <figure>
+                    <img v-bind:src="lesson.image">
+                   </figure>
+                    <p v-text="lesson.subject"></p>
+                    <p v-text="lesson.Location"></p>
+                    <p>Price:{{lesson.Price}}</p>
+                    <button class="button" v-on:click='removeItemFromCart(lesson)'>Remove item</button>
+                    </div>
+                </div>
+                </div>
+                <div class="checkoutPage">
+                    <form method="post" action="/post-order" >
+                    <h2>Checkout Page</h2>
+                    <p>
+                        <strong>Name:</strong>  
+                        <input class="textfield" v-model="FullName" value="" name="" onkeypress="onlyLetters(event)" type="text" />
+                    </p>
+                    <p>
+                        <strong>Phone:</strong>
+                        <input class="textfield" v-model.number="PhoneNumber" value="" onkeypress="onlyNumbers(event)"/>
+                    </p>
+                    <button class="buttonCheckout" v-on:click=""  v-bind:disabled="isDisabled" >Checkout</button>
+                
+                </div>
+            </div>
+        </form>
+        </main>
+        
+    <script>
+  
+            
+class list {
+        constructor(subject, Location){
+            this.subject = subject;
+            this.Location = Location;
+        }
+    }
+    
+    function onlyLetters(evt){
+        var texts = String.fromCharCode(evt.which);
+        if(!(/[a-zA-Z]/.test(texts))){
+            evt.preventDefault();
+        }
+    }
+    function onlyNumbers(evt){
+        var texts = String.fromCharCode(evt.which);
+        if(!(/[0-9]/.test(texts))){
+            evt.preventDefault();
+        }
+    }
+        //creating the vue object
+        let schoolClub = new Vue({
+            el: '#app', //accessing div element
+            data: {
+                lessons: [], //lesson array
+                showLessons: true,
+                sitename:"School Classes and Activities",
+                lessonsinfo: [],
+                cart: [],
+                showLessons: true,
+                FullName: '',
+                PhoneNumber: '',
+                search: '',
+                return:{
+                    sortBy: 'subject',
+                    sortBy: 'Location',
+                    sortBy: 'Price',
+                    sortDirection: 'ASC',
+                },
+                order: {
+                    Name:'',
+                    Phone:''
+                }
+            },
+            created: function(){
+                console.log('requesting data from server....')
+
+                //fetching the lessons from the server
+                fetch('http://localhost:3000/collection/Lesson Information').then(
+                    function(response){
+                        response.json().then(
+                            function(json){
+                                schoolClub.lessonsinfo = json;
+                            });
+                    }
+                )
+            },
+           
+            methods: {
+                addToCart(lessonsinfo) {
+                    this.cart.push(lessonsinfo);
+                    if(lessonsinfo.Spaces > 0){
+                        lessonsinfo.Spaces = lessonsinfo.Spaces -1; //Reduce slots available once added
+                    }
+                },
+                showShoppingCart(){
+                    this.showLessons = this.showLessons ? false: true;
+                },
+                submitForm(){
+                    alert('Order has been submitted');
+                },
+                canAddToCart(lesson){
+                    return lesson.Spaces > this.cartCount(lesson.id);
+                },
+                subjectSort(){
+                    return sortBy = 'subjects'
+                },
+                cartCount(id) {
+                    let count = 0;
+                    for (let i = 0; i < this.cart.length; i++) {
+                        if (this.cart[i] === id) {
+                            count++;
+                        }
+                    }
+                    return count;
+                },
+                removeItemFromCart(lesson){
+                    if(this.cart.splice(this.cart.indexOf(lesson),1)){
+                        lesson.Spaces =lesson.Spaces +1;
+                    }
+                        
+                },
+                previousPage(){
+                    this.showLessons = this.showLessons ? false: true;
+                        
+                },
+                SortLesson( by ){
+                    if( by == this.sortBy ){
+                        if( this.sortDirection == 'ASC' ){
+                        this.sortDirection = 'DESC';
+                        }else{
+                        this.sortDirection = 'ASC';
+                        }
+                    }
+                    if( by != this.sortBy ){
+                        this.sortDirection = 'ASC';
+                        this.sortBy = by;
+                    }
+                    switch( this.sortBy ){
+                    case 'subject':
+                        this.sortBySubjects();
+                    break;
+                    case 'Location':
+                        this.sortByLocation();
+                    break;
+                    case 'Price':
+                        this.sortbyPrice();
+                    break;
+                    }
+                },
+                    sortBySubjects(){
+                    this.lesson.sort( function( a, b ){
+                        return ( ( a.subject == b.subject ) ? 0 : ( ( a.subject > b.subject ) ? 1 : -1 ) );
+                    }.bind(this));
+                    },
+                    sortByLocation(){
+                    this.lesson.sort( function( a, b ){
+                        return ( ( a.Location == b.Location ) ? 0 : ( ( a.Location > b.Location ) ? 1 : -1 ) );
+                    }.bind(this));
+                    },
+                    sortbyPrice(){
+                    this.lesson.sort( function( a, b ){
+                        return ( ( a.Price == b.Price ) ? 0 : ( ( a.Price > b.Price ) ? 1 : -1 ) );
+                    }.bind(this));
+                    },
+                    sortbySubjDESC(){
+                        this.lesson.sort( function( a, b ){
+                        return ( ( a.subject == b.subject ) ? 0 : ( ( a.subject < b.subject ) ? 1 : -1 ) );
+                    }.bind(this));
+                    },
+                    sortbyLocDESC(){
+                        this.lesson.sort( function( a, b ){
+                        return ( ( a.Location == b.Location ) ? 0 : ( ( a.Location < b.Location ) ? 1 : -1 ) );
+                    }.bind(this));
+                    },
+                    sortbyPriceDESC(){
+                        this.lesson.sort( function( a, b ){
+                        return ( ( a.Price == b.Price ) ? 0 : ( ( a.Price < b.Price ) ? 1 : -1 ) );
+                    }.bind(this));
+                    }
+
+                
+            },
+            computed: {
+                cartItemCount: function(){
+                    return this.cart.length || '' ;
+                },
+                isDisabled: function(){
+                    return this.FullName && this.PhoneNumber ? false : true;
+                },
+                searchInput: function(){
+                    return this.lesson.filter(list =>{
+                        return list.subject.toLowerCase().includes(this.search.toLowerCase()) 
+                        || list.Location.toLowerCase().includes(this.search.toLowerCase())
+                    })
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+<!-- end of code -->    
